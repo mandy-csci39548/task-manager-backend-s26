@@ -37,4 +37,42 @@ router.post('/', async (req, res) => {
   res.status(201).json(task)
 })
 
+router.put('/:id', async (req, res) => {
+  const { description, completed } = req.body
+
+  if (
+    typeof description !== 'string' ||
+    description.length === 0 ||
+    description.trim() === ''
+  ) {
+    return res.status(400).json({
+      error: 'Description is required!',
+    })
+  }
+
+  const id = parseInt(req.params.id)
+  try {
+    const task = await prisma.task.update({
+      where: { id },
+      data: {
+        description,
+        completed,
+      },
+    })
+
+    res.json(task)
+  } catch (error) {
+    if (error.code === 'P2025') {
+      return res.status(404).json({
+        error: 'Task not found',
+      })
+    }
+
+    console.log(error)
+    return res.status(500).json({
+      error: 'Failed to update task',
+    })
+  }
+})
+
 export default router
