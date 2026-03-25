@@ -75,4 +75,25 @@ router.put('/:id', async (req, res) => {
   }
 })
 
+router.delete('/:id', async (req, res) => {
+  const id = parseInt(req.params.id)
+
+  try {
+    await prisma.task.delete({
+      where: { id },
+    })
+
+    res.status(204).json({ message: 'Task deleted successfully' })
+  } catch (error) {
+    if (error.code === 'P2025') {
+      return res.status(404).json({
+        error: 'Task not found',
+      })
+    }
+    return res.status(500).json({
+      error: 'Failed to delete task',
+    })
+  }
+})
+
 export default router
