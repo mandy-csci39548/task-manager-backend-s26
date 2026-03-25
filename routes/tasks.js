@@ -14,4 +14,27 @@ router.get('/', async (req, res) => {
   res.json(tasks)
 })
 
+router.post('/', async (req, res) => {
+  const { description, completed } = req.body
+
+  if (
+    typeof description !== 'string' ||
+    description.length === 0 ||
+    description.trim() === ''
+  ) {
+    return res.status(400).json({
+      error: 'Description is required!',
+    })
+  }
+
+  const task = await prisma.task.create({
+    data: {
+      description,
+      completed,
+    },
+  })
+
+  res.status(201).json(task)
+})
+
 export default router
