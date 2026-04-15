@@ -1,5 +1,6 @@
 import express from 'express'
 import tasksRouter from './routes/tasks.js'
+import authRouter from './routes/auth.js'
 import cors from 'cors'
 
 const app = express()
@@ -12,6 +13,7 @@ app.use(
 )
 
 app.use('/tasks', tasksRouter)
+app.use('/auth', authRouter)
 
 app.listen(8000, () => {
   console.log('Server is running on port 8000')
