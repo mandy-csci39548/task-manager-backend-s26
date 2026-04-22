@@ -55,7 +55,7 @@ router.post('/login', async (req, res) => {
   res.json({ token })
 })
 
-const authMiddleware = (req, res, next) => {
+export const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization
   if (!authHeader) {
     return res.status(401).json({ error: 'Unauthenticated' })
@@ -66,6 +66,7 @@ const authMiddleware = (req, res, next) => {
     // jwt refresh
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
     req.user = decoded
+    console.log(req.user)
     next()
   } catch (error) {
     res.status(401).json({ error: 'Invalid token' })

@@ -2,14 +2,21 @@ import express from 'express'
 import 'dotenv/config'
 import { PrismaClient } from '../generated/prisma/client.ts'
 import { PrismaPg } from '@prisma/adapter-pg'
+import { authMiddleware } from './auth.js'
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
 const prisma = new PrismaClient({ adapter })
 
 const router = express.Router()
 
+router.use(authMiddleware)
+
 router.get('/', async (req, res) => {
-  const tasks = await prisma.task.findMany()
+  const tasks = await prisma.task.findMany({
+    where: {
+      userId: req.user.userId,
+    },
+  })
 
   res.json(tasks)
 })
@@ -31,6 +38,12 @@ router.post('/', async (req, res) => {
     data: {
       description,
       completed,
+      user: {
+        connect: {
+          id: req.user.userId,
+        },
+      }, // ✅
+      // userId: req.user.userId ❌
     },
   })
 
@@ -38,6 +51,16 @@ router.post('/', async (req, res) => {
 })
 
 router.put('/:id', async (req, res) => {
+  const task = await prisma.task.findUnique({
+    where: {
+      id: parseInt(req.params.id),
+    },
+  })
+
+  if (!task || task.userId !== req.user.userId) {
+    return res.status(403).json({ error: 'Not authorized!' })
+  }
+
   const { description, completed } = req.body
 
   if (
@@ -77,6 +100,14 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   const id = parseInt(req.params.id)
+
+  const task = await prisma.task.findUnique({
+    where: { id },
+  })
+
+  if (!task || task.userId !== req.user.userId) {
+    return res.status(403).json({ error: 'Not authorized' })
+  }
 
   try {
     await prisma.task.delete({
